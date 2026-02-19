@@ -17,7 +17,7 @@
   <main class="layout">
     <aside class="sidebar">
       <section class="card">
-        <h2>Due Next 48 Hours (Expected File Time)</h2>
+        <h2>In-progress Today</h2>
         <ul id="dueSoonList" class="compact-list"></ul>
       </section>
 
@@ -83,6 +83,20 @@
       <label>Art Notes <textarea id="artNotesInput" rows="2"></textarea></label>
       <label>Expected File Date & Time <input type="datetime-local" id="fileTimeInput" required /></label>
       <label>Expected Publish Date & Time <input type="datetime-local" id="publishTimeInput" required /></label>
+      <label>Priority
+        <select id="priorityInput" required>
+          <option value="1">1 (Highest)</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+        </select>
+      </label>
+      <label>Length
+        <select id="lengthInput" required>
+          <option>Short</option>
+          <option>Medium</option>
+          <option>Long</option>
+        </select>
+      </label>
       <label>Status
         <select id="statusInput" required>
           <option>In reporting</option>
@@ -107,6 +121,8 @@
       <p><strong>Reporter:</strong> <span id="detailReporter"></span></p>
       <p><strong>Budget Line:</strong> <span id="detailBudget"></span></p>
       <p><strong>Status:</strong> <span id="detailStatus"></span></p>
+      <p><strong>Priority:</strong> <span id="detailPriority"></span></p>
+      <p><strong>Length:</strong> <span id="detailLength"></span></p>
       <p><strong>Expected File Time:</strong> <span id="detailFileTime"></span></p>
       <p><strong>Expected Publish Time:</strong> <span id="detailPublishTime"></span></p>
       <p><strong>Art Notes:</strong> <span id="detailArtNotes"></span></p>

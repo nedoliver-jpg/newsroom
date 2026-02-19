@@ -8,7 +8,9 @@ const FIELD_OPTIONS = [
   { key: "status", label: "Status" },
   { key: "artNotes", label: "Art Notes" },
   { key: "expectedFileTime", label: "Expected File Time" },
-  { key: "expectedPublishTime", label: "Expected Publish Time" }
+  { key: "expectedPublishTime", label: "Expected Publish Time" },
+  { key: "priority", label: "Priority" },
+  { key: "length", label: "Length" }
 ];
 
 const els = {
@@ -34,6 +36,8 @@ const els = {
   artNotesInput: document.getElementById("artNotesInput"),
   fileTimeInput: document.getElementById("fileTimeInput"),
   publishTimeInput: document.getElementById("publishTimeInput"),
+  priorityInput: document.getElementById("priorityInput"),
+  lengthInput: document.getElementById("lengthInput"),
   statusInput: document.getElementById("statusInput"),
   cancelModalBtn: document.getElementById("cancelModalBtn"),
   detailModal: document.getElementById("detailModal"),
@@ -41,6 +45,8 @@ const els = {
   detailReporter: document.getElementById("detailReporter"),
   detailBudget: document.getElementById("detailBudget"),
   detailStatus: document.getElementById("detailStatus"),
+  detailPriority: document.getElementById("detailPriority"),
+  detailLength: document.getElementById("detailLength"),
   detailFileTime: document.getElementById("detailFileTime"),
   detailPublishTime: document.getElementById("detailPublishTime"),
   detailArtNotes: document.getElementById("detailArtNotes"),
@@ -126,6 +132,8 @@ function saveStoryFromForm(e) {
     artNotes: els.artNotesInput.value.trim(),
     expectedFileTime: new Date(els.fileTimeInput.value).toISOString(),
     expectedPublishTime: new Date(els.publishTimeInput.value).toISOString(),
+    priority: Number(els.priorityInput.value),
+    length: els.lengthInput.value,
     status: els.statusInput.value,
     comments: [],
     activity: []
@@ -161,6 +169,8 @@ function openStoryModal(story = null) {
   els.artNotesInput.value = story?.artNotes || "";
   els.fileTimeInput.value = story ? story.expectedFileTime.slice(0, 16) : "";
   els.publishTimeInput.value = story ? story.expectedPublishTime.slice(0, 16) : "";
+  els.priorityInput.value = String(story?.priority || 2);
+  els.lengthInput.value = story?.length || "Medium";
   els.statusInput.value = story?.status || STATUSES[0];
   els.storyModal.showModal();
 }
@@ -181,6 +191,8 @@ function openDetail(storyId) {
   els.detailReporter.textContent = story.reporter;
   els.detailBudget.textContent = story.budgetLine;
   els.detailStatus.textContent = story.status;
+  els.detailPriority.textContent = String(story.priority);
+  els.detailLength.textContent = story.length;
   els.detailFileTime.textContent = formatDate(story.expectedFileTime);
   els.detailPublishTime.textContent = formatDate(story.expectedPublishTime);
   els.detailArtNotes.textContent = story.artNotes || "-";
@@ -218,7 +230,7 @@ function addComment(e) {
 
 function renderAll() {
   renderStoryList();
-  renderDueSoon();
+  renderInProgressToday();
   renderAgenda();
 }
 
@@ -241,19 +253,19 @@ function renderStoryList() {
   );
 }
 
-function renderDueSoon() {
-  const now = new Date();
-  const cutoff = new Date(now.getTime() + 48 * 60 * 60 * 1000);
-  const due = filteredStories()
+function renderInProgressToday() {
+  const today = new Date();
+  const inProgress = filteredStories()
     .filter((s) => {
-      const t = new Date(s.expectedFileTime);
-      return t >= now && t <= cutoff;
+      const fileDate = new Date(s.expectedFileTime);
+      const activeStatus = s.status !== "Ready" && s.status !== "Published";
+      return sameDay(fileDate, today) && activeStatus;
     })
     .sort((a, b) => new Date(a.expectedFileTime) - new Date(b.expectedFileTime));
 
-  els.dueSoonList.innerHTML = due
-    .map((s) => `<li><strong>${escapeHtml(s.title)}</strong><br/><small>${formatDate(s.expectedFileTime)} • ${escapeHtml(s.reporter)}</small></li>`)
-    .join("") || "<li>No upcoming file deadlines in next 48 hours.</li>";
+  els.dueSoonList.innerHTML = inProgress
+    .map((s) => `<li><strong>${escapeHtml(s.title)}</strong><br/><small>${escapeHtml(s.status)} • File: ${formatDate(s.expectedFileTime)}</small></li>`)
+    .join("") || "<li>No in-progress stories filing today.</li>";
 }
 
 function renderAgenda() {
@@ -319,7 +331,7 @@ function renderWeekendDayHtml(dateObj, label) {
 function renderStoriesForDay(dateObj) {
   const rows = filteredStories()
     .filter((s) => sameDay(new Date(s.expectedPublishTime), dateObj))
-    .sort((a, b) => new Date(a.expectedPublishTime) - new Date(b.expectedPublishTime));
+    .sort((a, b) => (a.priority - b.priority) || (new Date(a.expectedPublishTime) - new Date(b.expectedPublishTime)));
 
   return rows.length ? rows.map((s) => buildStoryCardHtml(s)).join("") : '<div class="empty-day">No stories scheduled.</div>';
 }
@@ -350,6 +362,8 @@ function buildStoryCardHtml(story) {
   if (fieldPrefs.artNotes) visibleLines.push(`<div class="card-line"><strong>Art:</strong> ${escapeHtml(story.artNotes || "-")}</div>`);
   if (fieldPrefs.expectedFileTime) visibleLines.push(`<div class="card-line"><strong>File:</strong> ${formatDate(story.expectedFileTime)}</div>`);
   if (fieldPrefs.expectedPublishTime) visibleLines.push(`<div class="card-line"><strong>Publish:</strong> ${formatDate(story.expectedPublishTime)}</div>`);
+  if (fieldPrefs.priority) visibleLines.push(`<div class="card-line"><strong>Priority:</strong> ${story.priority}</div>`);
+  if (fieldPrefs.length) visibleLines.push(`<div class="card-line"><strong>Length:</strong> ${escapeHtml(story.length)}</div>`);
 
   return `<article class="story-card" draggable="true" data-story="${story.id}">
       <div class="headline">${escapeHtml(story.title)}</div>
@@ -463,7 +477,9 @@ function loadStories() {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     return parsed.map((s) => ({
       ...s,
-      expectedPublishTime: s.expectedPublishTime || s.expectedFileTime
+      expectedPublishTime: s.expectedPublishTime || s.expectedFileTime,
+      priority: Number(s.priority || 2),
+      length: s.length || "Medium"
     }));
   } catch {
     return [];

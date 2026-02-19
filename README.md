@@ -4,7 +4,7 @@ Simple browser-based newsroom budget + editorial planning app for `nedoliver.com
 
 ## Features
 - Shared story board with equal edit permissions (no role gating).
-- Story fields: title, reporter, budget line, art notes, expected file date/time, expected publish date/time, workflow status.
+- Story fields: title, reporter, budget line, art notes, expected file date/time, expected publish date/time, priority (1-3), length (short/medium/long), workflow status.
 - Workflow statuses: In reporting -> Editing -> Ready -> Published.
 - Rolling, scrollable week agenda: Monday-Friday columns and a weekend column with separate Saturday and Sunday boxes stacked vertically.
 - Stories are placed on the agenda by expected publish date/time.
@@ -13,7 +13,7 @@ Simple browser-based newsroom budget + editorial planning app for `nedoliver.com
 - Add day-level notes/reminders from the left sidebar (holidays, schedule changes, coverage notes) that appear on matching days.
 - Filters by reporter, status, and budget line.
 - Story detail modal with comments and activity log.
-- Dashboard widget for items due in the next 48 hours based on expected file times.
+- Dashboard widget for in-progress stories filing today, ordered by planned file time (excludes Ready/Published).
 
 ## Run locally
 Open `index.html` directly, or run:
