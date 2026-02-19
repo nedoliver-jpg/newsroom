@@ -6,7 +6,7 @@ body { margin:0; font-family:Inter,system-ui,sans-serif; background:var(--bg); c
 .topbar-actions{display:flex;gap:.45rem;align-items:center}
 .icon-btn{width:36px}
 .collapsed-search{width:0;opacity:0;padding:0;border:none;transition:all .2s}
-.expanded-search{width:220px;opacity:1;padding:.5rem .6rem;border:1px solid #c7cfdf}
+.collapsed-search.expanded-search{width:220px;opacity:1;padding:.5rem .6rem;border:1px solid #c7cfdf}
 .layout{padding:1rem}.single-column{grid-template-columns:1fr}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.9rem}
 .toolbar-row{display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap}
@@ -18,7 +18,6 @@ input,select,textarea,button{font:inherit;border:1px solid #c7cfdf;border-radius
 button{background:var(--accent);color:#fff;border-color:transparent;cursor:pointer}
 button.secondary{background:#e9edf8;color:#1f2c46}.danger{background:#c43636}
 .compact-list{list-style:none;margin:0;padding:0;display:grid;gap:.45rem}.compact-list li{border:1px solid var(--line);border-radius:8px;padding:.5rem;background:#fbfcff}
-.inprogress-card{margin:.6rem 0}
 .agenda-scroller{max-height:62vh;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:.65rem;background:#f9fbff}
 .agenda-weeks{display:grid;gap:1rem}
 .week-block{border:1px solid var(--line);border-radius:10px;padding:.6rem;background:#fff}
@@ -31,3 +30,5 @@ button.secondary{background:#e9edf8;color:#1f2c46}.danger{background:#c43636}
 .headline{font-weight:600;font-size:.85rem}.card-line{font-size:.76rem;color:#3b4b67}
 .future-agenda{margin-top:.8rem}.list-item{border:1px solid var(--line);border-radius:8px;padding:.45rem;margin:.3rem 0;background:#fbfdff;cursor:pointer}
 .field-grid{display:grid;gap:.3rem}.field-grid label{display:flex;align-items:center;gap:.45rem;margin:0}
+
+.drop-zone.drag-over{outline:2px dashed #315efb;outline-offset:-2px}

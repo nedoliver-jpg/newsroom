@@ -20,7 +20,7 @@
   <main class="layout single-column">
     <section class="content card">
       <div class="toolbar-row">
-        <h2 class="agenda-title">Rolling Whiteboard</h2>
+        <h2 class="agenda-title">Whiteboard</h2>
         <div class="toolbar-actions">
           <button id="filtersToggleBtn" class="secondary">Filters ▾</button>
           <button id="fieldsToggleBtn" class="secondary">Card Fields ▾</button>
@@ -47,11 +47,6 @@
         <div class="field-grid" id="fieldToggles"></div>
       </section>
 
-      <section class="card inprogress-card">
-        <h3>In-progress Today</h3>
-        <ul id="dueSoonList" class="compact-list"></ul>
-      </section>
-
       <div id="agendaScroller" class="agenda-scroller">
         <div id="agendaWeeks" class="agenda-weeks"></div>
       </div>
@@ -69,7 +64,9 @@
       <label>Budget Line <textarea id="budgetInput" rows="2" required></textarea></label>
       <label>Art Notes <input id="artNotesInput" /></label>
       <label>Expected File Date <input type="date" id="fileDateInput" /></label>
-      <label>Expected File Time <input type="time" id="fileTimeInput" step="1800" /></label>
+      <label>Expected File Time
+        <select id="fileTimeInput"></select>
+      </label>
       <label>Expected Publish Date <input type="date" id="publishDateInput" /></label>
       <label>Priority
         <select id="priorityInput" required>

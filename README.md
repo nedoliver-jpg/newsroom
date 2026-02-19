@@ -8,7 +8,6 @@ Simple browser-based newsroom budget + editorial planning app for `nedoliver.com
 - Statuses: Reporting -> Writing -> Editing -> Ready -> Published.
 - Top action bar with New Story, New Reminder, and expanding search.
 - Filters and agenda-card-field controls are toggled from dropdown buttons above the board.
-- In-progress Today panel shows stories filing today, excludes Ready/Published, ordered by planned file time.
 - Rolling weekly board for up to 3 active weeks (Mon-Fri + stacked Sat/Sun weekend box), day reminders, and click-to-open story details.
 - No empty "No stories scheduled" placeholders in day boxes.
 - Extended agenda list after 3 weeks, grouped by date, then Unscheduled buckets (Ready, Editing, Writing), then Investigating (Reporting with no filing date/time).

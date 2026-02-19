@@ -14,7 +14,6 @@ const FIELD_OPTIONS = [
 ];
 
 const els = {
-  dueSoonList: document.getElementById("dueSoonList"),
   reporterFilter: document.getElementById("reporterFilter"),
   statusFilter: document.getElementById("statusFilter"),
   budgetFilter: document.getElementById("budgetFilter"),
@@ -80,6 +79,7 @@ init();
 
 function init() {
   bootstrapWeeks();
+  renderFileTimeOptions();
   renderFieldControls();
   els.dayNoteDateInput.value = dayKey(new Date());
   bindEvents();
@@ -96,7 +96,10 @@ function bindEvents() {
   els.fileDateInput.addEventListener("change", autoSetFileTimeDefault);
   els.clearFiltersBtn.addEventListener("click", clearFilters);
   [els.reporterFilter, els.statusFilter, els.budgetFilter, els.searchInput].forEach((el) => el.addEventListener("input", renderAll));
-  els.searchToggleBtn.addEventListener("click", () => els.searchInput.classList.toggle("expanded-search"));
+  els.searchToggleBtn.addEventListener("click", () => {
+    els.searchInput.classList.toggle("expanded-search");
+    if (els.searchInput.classList.contains("expanded-search")) els.searchInput.focus();
+  });
   els.filtersToggleBtn.addEventListener("click", () => els.filtersPanel.classList.toggle("hidden-panel"));
   els.fieldsToggleBtn.addEventListener("click", () => els.fieldsPanel.classList.toggle("hidden-panel"));
   els.titleInput.addEventListener("input", () => {
@@ -133,6 +136,19 @@ function renderFieldControls() {
       renderAll();
     });
   });
+}
+
+
+function renderFileTimeOptions() {
+  const options = ['<option value="">No time set</option>'];
+  for (let hour = 0; hour < 24; hour += 1) {
+    for (let minute = 0; minute < 60; minute += 30) {
+      const hh = String(hour).padStart(2, "0");
+      const mm = String(minute).padStart(2, "0");
+      options.push(`<option value="${hh}:${mm}">${hh}:${mm}</option>`);
+    }
+  }
+  els.fileTimeInput.innerHTML = options.join("");
 }
 
 function autoSetFileTimeDefault() {
@@ -190,7 +206,6 @@ function openStoryModal(story = null) {
 }
 
 function renderAll() {
-  renderInProgressToday();
   renderAgenda();
   renderFutureAgenda();
 }
@@ -207,17 +222,6 @@ function filteredStories() {
       (!budget || s.budgetLine.toLowerCase().includes(budget)) &&
       (!q || textBlob.includes(q));
   });
-}
-
-function renderInProgressToday() {
-  const today = dayKey(new Date());
-  const list = filteredStories()
-    .filter((s) => s.expectedFileDate === today && s.status !== "Ready" && s.status !== "Published")
-    .sort((a, b) => (a.expectedFileTime || "99:99").localeCompare(b.expectedFileTime || "99:99"));
-
-  els.dueSoonList.innerHTML = list.length
-    ? list.map((s) => `<li><strong>${escapeHtml(s.title)}</strong><br/><small>${escapeHtml(s.status)} • ${s.expectedFileTime || "No file time"}</small></li>`).join("")
-    : "<li>No in-progress stories filing today.</li>";
 }
 
 function renderAgenda() {
@@ -266,7 +270,7 @@ function renderDayColumnHtml(dateObj, label, nested = false) {
   const cards = rows.map((s) => buildStoryCardHtml(s)).join("");
   const noteMarkup = notes.length ? `<div class="day-notes">${notes.map((n)=>`<div class="note-item">${escapeHtml(n)}</div>`).join("")}</div>` : "";
   const cls = nested ? "weekend-day" : "day-column";
-  return `<section class="${cls}" data-day="${dateStr}"><h5 class="day-title">${label} (${formatShortDate(dateObj)})</h5>${cards}${noteMarkup}</section>`;
+  return `<section class="${cls} drop-zone" data-day="${dateStr}"><h5 class="day-title">${label} (${formatShortDate(dateObj)})</h5>${cards}${noteMarkup}</section>`;
 }
 
 function buildStoryCardHtml(story) {
@@ -279,7 +283,7 @@ function buildStoryCardHtml(story) {
   if (fieldPrefs.expectedPublishDate) lines.push(`<div class="card-line"><strong>Publish:</strong> ${story.expectedPublishDate || ""}</div>`);
   if (fieldPrefs.priority) lines.push(`<div class="card-line"><strong>Priority:</strong> ${story.priority}</div>`);
   if (fieldPrefs.length) lines.push(`<div class="card-line"><strong>Length:</strong> ${escapeHtml(story.length)}</div>`);
-  return `<article class="story-card" data-open="${story.id}"><div class="headline">${escapeHtml(story.title)}</div>${lines.join("")}</article>`;
+  return `<article class="story-card" draggable="true" data-open="${story.id}" data-story-id="${story.id}"><div class="headline">${escapeHtml(story.title)}</div>${lines.join("")}</article>`;
 }
 
 function renderFutureAgenda() {
@@ -325,6 +329,30 @@ function renderStatusBucket(label, list) {
 function wireAgendaInteractions() {
   document.querySelectorAll("[data-open]").forEach((el) => {
     el.addEventListener("click", () => openDetail(el.dataset.open));
+  });
+
+  let draggingStoryId = null;
+  document.querySelectorAll('.story-card[data-story-id]').forEach((card) => {
+    card.addEventListener('dragstart', () => { draggingStoryId = card.dataset.storyId; });
+    card.addEventListener('dragend', () => {
+      draggingStoryId = null;
+      document.querySelectorAll('.drop-zone').forEach((z) => z.classList.remove('drag-over'));
+    });
+  });
+
+  document.querySelectorAll('.drop-zone[data-day]').forEach((zone) => {
+    zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', () => {
+      zone.classList.remove('drag-over');
+      if (!draggingStoryId) return;
+      const story = stories.find((s) => s.id === draggingStoryId);
+      if (!story) return;
+      story.expectedPublishDate = zone.dataset.day;
+      story.activity.push(logItem(`Publish date moved to ${zone.dataset.day}`));
+      persistStories();
+      renderAll();
+    });
   });
 }
 
