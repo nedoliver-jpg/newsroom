@@ -1,13 +1,14 @@
-const STORAGE_KEY = "newsroomStoriesV2";
-const REMINDER_KEY = "newsroomRemindersEnabled";
-const FIELD_PREFS_KEY = "newsroomAgendaFieldPrefs";
+const STORAGE_KEY = "whiteboardStoriesV3";
+const DAY_NOTES_KEY = "whiteboardDayNotesV1";
+const FIELD_PREFS_KEY = "whiteboardAgendaFieldPrefs";
 const STATUSES = ["In reporting", "Editing", "Ready", "Published"];
 const FIELD_OPTIONS = [
   { key: "reporter", label: "Reporter" },
   { key: "budgetLine", label: "Budget Line" },
   { key: "status", label: "Status" },
   { key: "artNotes", label: "Art Notes" },
-  { key: "expectedFileTime", label: "Expected File Time" }
+  { key: "expectedFileTime", label: "Expected File Time" },
+  { key: "expectedPublishTime", label: "Expected Publish Time" }
 ];
 
 const els = {
@@ -18,13 +19,9 @@ const els = {
   budgetFilter: document.getElementById("budgetFilter"),
   clearFiltersBtn: document.getElementById("clearFiltersBtn"),
   newStoryBtn: document.getElementById("newStoryBtn"),
-  remindersToggle: document.getElementById("remindersToggle"),
   fieldToggles: document.getElementById("fieldToggles"),
-  agendaBoard: document.getElementById("agendaBoard"),
-  agendaRangeLabel: document.getElementById("agendaRangeLabel"),
-  prevWeekBtn: document.getElementById("prevWeekBtn"),
-  nextWeekBtn: document.getElementById("nextWeekBtn"),
-  thisWeekBtn: document.getElementById("thisWeekBtn"),
+  agendaScroller: document.getElementById("agendaScroller"),
+  agendaWeeks: document.getElementById("agendaWeeks"),
   storyModal: document.getElementById("storyModal"),
   storyForm: document.getElementById("storyForm"),
   storyId: document.getElementById("storyId"),
@@ -33,6 +30,7 @@ const els = {
   budgetInput: document.getElementById("budgetInput"),
   artNotesInput: document.getElementById("artNotesInput"),
   fileTimeInput: document.getElementById("fileTimeInput"),
+  publishTimeInput: document.getElementById("publishTimeInput"),
   statusInput: document.getElementById("statusInput"),
   cancelModalBtn: document.getElementById("cancelModalBtn"),
   detailModal: document.getElementById("detailModal"),
@@ -41,6 +39,7 @@ const els = {
   detailBudget: document.getElementById("detailBudget"),
   detailStatus: document.getElementById("detailStatus"),
   detailFileTime: document.getElementById("detailFileTime"),
+  detailPublishTime: document.getElementById("detailPublishTime"),
   detailArtNotes: document.getElementById("detailArtNotes"),
   commentsList: document.getElementById("commentsList"),
   commentForm: document.getElementById("commentForm"),
@@ -53,19 +52,18 @@ const els = {
 };
 
 let stories = loadStories();
+let dayNotes = loadDayNotes();
 let activeStoryId = null;
-let reminderTimer;
-let currentWeekStart = getMonday(new Date());
 let fieldPrefs = loadFieldPrefs();
+let loadedWeekStarts = [];
 
 init();
 
 function init() {
-  els.remindersToggle.checked = localStorage.getItem(REMINDER_KEY) === "true";
   renderFieldControls();
   bindEvents();
+  bootstrapWeeks();
   renderAll();
-  scheduleReminderCheck();
 }
 
 function bindEvents() {
@@ -83,22 +81,19 @@ function bindEvents() {
     if (story) openStoryModal(story);
   });
   els.deleteStoryBtn.addEventListener("click", deleteActiveStory);
-  els.remindersToggle.addEventListener("change", () => {
-    localStorage.setItem(REMINDER_KEY, String(els.remindersToggle.checked));
-    scheduleReminderCheck();
+
+  els.agendaScroller.addEventListener("scroll", () => {
+    const nearBottom = els.agendaScroller.scrollTop + els.agendaScroller.clientHeight >= els.agendaScroller.scrollHeight - 240;
+    if (nearBottom) appendWeeks(2);
   });
-  els.prevWeekBtn.addEventListener("click", () => {
-    currentWeekStart = addDays(currentWeekStart, -7);
-    renderAgenda();
-  });
-  els.nextWeekBtn.addEventListener("click", () => {
-    currentWeekStart = addDays(currentWeekStart, 7);
-    renderAgenda();
-  });
-  els.thisWeekBtn.addEventListener("click", () => {
-    currentWeekStart = getMonday(new Date());
-    renderAgenda();
-  });
+}
+
+function bootstrapWeeks() {
+  loadedWeekStarts = [];
+  const thisWeek = getMonday(new Date());
+  for (let i = -1; i <= 2; i += 1) {
+    loadedWeekStarts.push(addDays(thisWeek, i * 7));
+  }
 }
 
 function renderFieldControls() {
@@ -125,6 +120,7 @@ function saveStoryFromForm(e) {
     budgetLine: els.budgetInput.value.trim(),
     artNotes: els.artNotesInput.value.trim(),
     expectedFileTime: new Date(els.fileTimeInput.value).toISOString(),
+    expectedPublishTime: new Date(els.publishTimeInput.value).toISOString(),
     status: els.statusInput.value,
     comments: [],
     activity: []
@@ -159,6 +155,7 @@ function openStoryModal(story = null) {
   els.budgetInput.value = story?.budgetLine || "";
   els.artNotesInput.value = story?.artNotes || "";
   els.fileTimeInput.value = story ? story.expectedFileTime.slice(0, 16) : "";
+  els.publishTimeInput.value = story ? story.expectedPublishTime.slice(0, 16) : "";
   els.statusInput.value = story?.status || STATUSES[0];
   els.storyModal.showModal();
 }
@@ -180,6 +177,7 @@ function openDetail(storyId) {
   els.detailBudget.textContent = story.budgetLine;
   els.detailStatus.textContent = story.status;
   els.detailFileTime.textContent = formatDate(story.expectedFileTime);
+  els.detailPublishTime.textContent = formatDate(story.expectedPublishTime);
   els.detailArtNotes.textContent = story.artNotes || "-";
 
   els.commentsList.innerHTML = story.comments
@@ -222,12 +220,12 @@ function renderAll() {
 function renderStoryList() {
   const filtered = filteredStories();
   els.storyList.innerHTML = filtered
-    .sort((a, b) => new Date(a.expectedFileTime) - new Date(b.expectedFileTime))
+    .sort((a, b) => new Date(a.expectedPublishTime) - new Date(b.expectedPublishTime))
     .map(
       (s) => `<li>
       <div class="story-item-top"><strong>${escapeHtml(s.title)}</strong><span class="badge">${escapeHtml(s.status)}</span></div>
       <div>${escapeHtml(s.reporter)} • ${escapeHtml(s.budgetLine)}</div>
-      <small>${formatDate(s.expectedFileTime)}</small>
+      <small>Publish: ${formatDate(s.expectedPublishTime)}</small>
       <div><button data-open="${s.id}" class="secondary">Details</button></div>
     </li>`
     )
@@ -250,44 +248,92 @@ function renderDueSoon() {
 
   els.dueSoonList.innerHTML = due
     .map((s) => `<li><strong>${escapeHtml(s.title)}</strong><br/><small>${formatDate(s.expectedFileTime)} • ${escapeHtml(s.reporter)}</small></li>`)
-    .join("") || "<li>No upcoming deadlines in next 48 hours.</li>";
+    .join("") || "<li>No upcoming file deadlines in next 48 hours.</li>";
 }
 
 function renderAgenda() {
-  const monday = currentWeekStart;
-  const friday = addDays(monday, 4);
-  const sunday = addDays(monday, 6);
-  els.agendaRangeLabel.textContent = `${formatShortDate(monday)} - ${formatShortDate(sunday)}`;
+  els.agendaWeeks.innerHTML = loadedWeekStarts
+    .sort((a, b) => a - b)
+    .map((weekStart) => renderWeekBlockHtml(weekStart))
+    .join("");
 
-  const columns = [
-    { key: "mon", label: `Monday (${formatShortDate(monday)})`, match: (d) => sameDay(d, monday) },
-    { key: "tue", label: `Tuesday (${formatShortDate(addDays(monday, 1))})`, match: (d) => sameDay(d, addDays(monday, 1)) },
-    { key: "wed", label: `Wednesday (${formatShortDate(addDays(monday, 2))})`, match: (d) => sameDay(d, addDays(monday, 2)) },
-    { key: "thu", label: `Thursday (${formatShortDate(addDays(monday, 3))})`, match: (d) => sameDay(d, addDays(monday, 3)) },
-    { key: "fri", label: `Friday (${formatShortDate(friday)})`, match: (d) => sameDay(d, friday) },
-    {
-      key: "weekend",
-      label: `Saturday/Sunday (${formatShortDate(addDays(monday, 5))} + ${formatShortDate(sunday)})`,
-      match: (d) => sameDay(d, addDays(monday, 5)) || sameDay(d, sunday)
-    }
+  els.agendaWeeks.insertAdjacentHTML("beforeend", '<div class="load-hint">Scroll to load more weeks...</div>');
+  wireAgendaInteractions();
+}
+
+function renderWeekBlockHtml(monday) {
+  const sunday = addDays(monday, 6);
+  const days = [
+    { key: dayKey(addDays(monday, 0)), label: `Monday (${formatShortDate(addDays(monday, 0))})`, date: addDays(monday, 0) },
+    { key: dayKey(addDays(monday, 1)), label: `Tuesday (${formatShortDate(addDays(monday, 1))})`, date: addDays(monday, 1) },
+    { key: dayKey(addDays(monday, 2)), label: `Wednesday (${formatShortDate(addDays(monday, 2))})`, date: addDays(monday, 2) },
+    { key: dayKey(addDays(monday, 3)), label: `Thursday (${formatShortDate(addDays(monday, 3))})`, date: addDays(monday, 3) },
+    { key: dayKey(addDays(monday, 4)), label: `Friday (${formatShortDate(addDays(monday, 4))})`, date: addDays(monday, 4) }
   ];
 
-  els.agendaBoard.innerHTML = columns.map((col) => {
-    const colStories = filteredStories()
-      .filter((s) => col.match(new Date(s.expectedFileTime)))
-      .sort((a, b) => new Date(a.expectedFileTime) - new Date(b.expectedFileTime));
+  const weekdayCols = days.map((day) => renderDayColumnHtml(day.key, day.label, day.date)).join("");
+  const saturday = addDays(monday, 5);
+  const sundayDate = addDays(monday, 6);
 
-    const cards = colStories.length
-      ? colStories.map((s) => buildStoryCardHtml(s)).join("")
-      : '<div class="empty-day">No stories scheduled.</div>';
+  return `<section class="week-block" data-week="${dayKey(monday)}">
+    <h3 class="week-title">Week of ${formatShortDate(monday)} - ${formatShortDate(sunday)}</h3>
+    <div class="week-grid">
+      ${weekdayCols}
+      <section class="day-column weekend-column">
+        <h4 class="day-title">Weekend</h4>
+        ${renderWeekendDayHtml(saturday, "Saturday")}
+        ${renderWeekendDayHtml(sundayDate, "Sunday")}
+      </section>
+    </div>
+  </section>`;
+}
 
-    return `<section class="day-column" data-column="${col.key}">
-      <h3 class="day-title">${col.label}</h3>
-      ${cards}
-    </section>`;
-  }).join("");
+function renderDayColumnHtml(dateKey, label, dateObj) {
+  const cards = renderStoriesForDay(dateObj);
+  const notes = renderNotesForDay(dateKey);
+  return `<section class="day-column" data-drop-day="${dateKey}">
+    <h4 class="day-title">${label}</h4>
+    ${cards}
+    <div class="day-notes">
+      ${notes}
+      ${noteFormHtml(dateKey)}
+    </div>
+  </section>`;
+}
 
-  wireAgendaInteractions();
+function renderWeekendDayHtml(dateObj, label) {
+  const key = dayKey(dateObj);
+  const cards = renderStoriesForDay(dateObj);
+  const notes = renderNotesForDay(key);
+  return `<section class="weekend-day" data-drop-day="${key}">
+    <h5 class="day-title">${label} (${formatShortDate(dateObj)})</h5>
+    ${cards}
+    <div class="day-notes">
+      ${notes}
+      ${noteFormHtml(key)}
+    </div>
+  </section>`;
+}
+
+function renderStoriesForDay(dateObj) {
+  const rows = filteredStories()
+    .filter((s) => sameDay(new Date(s.expectedPublishTime), dateObj))
+    .sort((a, b) => new Date(a.expectedPublishTime) - new Date(b.expectedPublishTime));
+
+  return rows.length ? rows.map((s) => buildStoryCardHtml(s)).join("") : '<div class="empty-day">No stories scheduled.</div>';
+}
+
+function renderNotesForDay(dateKey) {
+  const notes = dayNotes[dateKey] || [];
+  if (!notes.length) return '<div class="note-item">No day notes.</div>';
+  return notes.map((n) => `<div class="note-item">${escapeHtml(n)}</div>`).join("");
+}
+
+function noteFormHtml(dateKey) {
+  return `<form class="note-form" data-note-form="${dateKey}">
+    <input type="text" data-note-input="${dateKey}" placeholder="Add day note (holiday, schedule change...)" />
+    <button type="submit" class="secondary">Add Note</button>
+  </form>`;
 }
 
 function buildStoryCardHtml(story) {
@@ -297,13 +343,14 @@ function buildStoryCardHtml(story) {
   if (fieldPrefs.status) visibleLines.push(`<div class="card-line"><strong>Status:</strong> ${escapeHtml(story.status)}</div>`);
   if (fieldPrefs.artNotes) visibleLines.push(`<div class="card-line"><strong>Art:</strong> ${escapeHtml(story.artNotes || "-")}</div>`);
   if (fieldPrefs.expectedFileTime) visibleLines.push(`<div class="card-line"><strong>File:</strong> ${formatDate(story.expectedFileTime)}</div>`);
+  if (fieldPrefs.expectedPublishTime) visibleLines.push(`<div class="card-line"><strong>Publish:</strong> ${formatDate(story.expectedPublishTime)}</div>`);
 
   return `<article class="story-card" draggable="true" data-story="${story.id}">
       <div class="headline">${escapeHtml(story.title)}</div>
       ${visibleLines.join("")}
       <div class="time-editor">
-        <label>Time</label>
-        <input type="time" data-time-story="${story.id}" value="${toLocalTimeValue(story.expectedFileTime)}" />
+        <label>Publish Time</label>
+        <input type="time" data-publish-time-story="${story.id}" value="${toLocalTimeValue(story.expectedPublishTime)}" />
       </div>
       <div class="card-actions">
         <button class="secondary" data-open="${story.id}" type="button">Details</button>
@@ -313,78 +360,90 @@ function buildStoryCardHtml(story) {
 }
 
 function wireAgendaInteractions() {
-  els.agendaBoard.querySelectorAll("[data-open]").forEach((btn) => {
+  els.agendaWeeks.querySelectorAll("[data-open]").forEach((btn) => {
     btn.addEventListener("click", () => openDetail(btn.dataset.open));
   });
-  els.agendaBoard.querySelectorAll("[data-edit]").forEach((btn) => {
+
+  els.agendaWeeks.querySelectorAll("[data-edit]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const story = stories.find((s) => s.id === btn.dataset.edit);
       if (story) openStoryModal(story);
     });
   });
 
+  els.agendaWeeks.querySelectorAll("form[data-note-form]").forEach((form) => {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const dateKey = form.dataset.noteForm;
+      const input = form.querySelector("input[data-note-input]");
+      const text = input.value.trim();
+      if (!text) return;
+      if (!dayNotes[dateKey]) dayNotes[dateKey] = [];
+      dayNotes[dateKey].push(text);
+      persistDayNotes();
+      renderAgenda();
+    });
+  });
+
   let draggedStoryId = null;
-  els.agendaBoard.querySelectorAll(".story-card").forEach((card) => {
+  els.agendaWeeks.querySelectorAll(".story-card").forEach((card) => {
     card.addEventListener("dragstart", () => {
       draggedStoryId = card.dataset.story;
     });
     card.addEventListener("dragend", () => {
       draggedStoryId = null;
-      els.agendaBoard.querySelectorAll(".day-column").forEach((c) => c.classList.remove("drag-over"));
+      els.agendaWeeks.querySelectorAll("[data-drop-day]").forEach((c) => c.classList.remove("drag-over"));
     });
   });
 
-  els.agendaBoard.querySelectorAll(".day-column").forEach((col) => {
-    col.addEventListener("dragover", (e) => {
+  els.agendaWeeks.querySelectorAll("[data-drop-day]").forEach((zone) => {
+    zone.addEventListener("dragover", (e) => {
       e.preventDefault();
-      col.classList.add("drag-over");
+      zone.classList.add("drag-over");
     });
-    col.addEventListener("dragleave", () => col.classList.remove("drag-over"));
-    col.addEventListener("drop", () => {
-      col.classList.remove("drag-over");
+    zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
+    zone.addEventListener("drop", () => {
+      zone.classList.remove("drag-over");
       if (!draggedStoryId) return;
-      moveStoryToColumnDay(draggedStoryId, col.dataset.column);
+      moveStoryToDate(draggedStoryId, zone.dataset.dropDay);
     });
   });
 
-  els.agendaBoard.querySelectorAll("input[data-time-story]").forEach((input) => {
+  els.agendaWeeks.querySelectorAll("input[data-publish-time-story]").forEach((input) => {
     input.addEventListener("change", () => {
-      const story = stories.find((s) => s.id === input.dataset.timeStory);
+      const story = stories.find((s) => s.id === input.dataset.publishTimeStory);
       if (!story) return;
-      const existing = new Date(story.expectedFileTime);
+      const existing = new Date(story.expectedPublishTime);
       const [hours, minutes] = input.value.split(":").map((n) => Number(n));
       existing.setHours(hours, minutes, 0, 0);
-      story.expectedFileTime = existing.toISOString();
-      story.activity.push(logItem("Expected file time adjusted from agenda card"));
+      story.expectedPublishTime = existing.toISOString();
+      story.activity.push(logItem("Expected publish time adjusted from agenda card"));
       persistStories();
       renderAll();
     });
   });
 }
 
-function moveStoryToColumnDay(storyId, columnKey) {
+function moveStoryToDate(storyId, targetDayKey) {
   const story = stories.find((s) => s.id === storyId);
   if (!story) return;
-
-  const current = new Date(story.expectedFileTime);
-  const monday = currentWeekStart;
-  const targets = {
-    mon: addDays(monday, 0),
-    tue: addDays(monday, 1),
-    wed: addDays(monday, 2),
-    thu: addDays(monday, 3),
-    fri: addDays(monday, 4),
-    weekend: addDays(monday, 5)
-  };
-
-  const targetDate = targets[columnKey];
-  if (!targetDate) return;
-
-  targetDate.setHours(current.getHours(), current.getMinutes(), 0, 0);
-  story.expectedFileTime = targetDate.toISOString();
-  story.activity.push(logItem(`Rescheduled via agenda drag/drop to ${columnKey}`));
+  const current = new Date(story.expectedPublishTime);
+  const target = fromDayKey(targetDayKey);
+  target.setHours(current.getHours(), current.getMinutes(), 0, 0);
+  story.expectedPublishTime = target.toISOString();
+  story.activity.push(logItem(`Rescheduled via agenda drag/drop to ${targetDayKey}`));
   persistStories();
   renderAll();
+}
+
+function appendWeeks(count) {
+  const sorted = loadedWeekStarts.sort((a, b) => a - b);
+  let last = sorted[sorted.length - 1];
+  for (let i = 0; i < count; i += 1) {
+    last = addDays(last, 7);
+    loadedWeekStarts.push(new Date(last));
+  }
+  renderAgenda();
 }
 
 function filteredStories() {
@@ -407,30 +466,13 @@ function clearFilters() {
   renderAll();
 }
 
-function scheduleReminderCheck() {
-  clearInterval(reminderTimer);
-  if (!els.remindersToggle.checked) return;
-  reminderTimer = setInterval(checkUpcomingReminders, 60_000);
-  checkUpcomingReminders();
-}
-
-function checkUpcomingReminders() {
-  if (!els.remindersToggle.checked) return;
-  const now = new Date();
-  const ahead = new Date(now.getTime() + 60 * 60 * 1000);
-  const upcoming = stories.filter((s) => {
-    const t = new Date(s.expectedFileTime);
-    return t > now && t <= ahead && s.status !== "Published";
-  });
-  if (!upcoming.length) return;
-
-  const msg = upcoming.map((s) => `${s.title} (${formatDate(s.expectedFileTime)})`).join("\n");
-  alert(`Upcoming file deadlines within 1 hour:\n${msg}`);
-}
-
 function loadStories() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    return parsed.map((s) => ({
+      ...s,
+      expectedPublishTime: s.expectedPublishTime || s.expectedFileTime
+    }));
   } catch {
     return [];
   }
@@ -438,6 +480,18 @@ function loadStories() {
 
 function persistStories() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(stories));
+}
+
+function loadDayNotes() {
+  try {
+    return JSON.parse(localStorage.getItem(DAY_NOTES_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function persistDayNotes() {
+  localStorage.setItem(DAY_NOTES_KEY, JSON.stringify(dayNotes));
 }
 
 function loadFieldPrefs() {
@@ -470,6 +524,14 @@ function addDays(date, days) {
   const d = new Date(date);
   d.setDate(d.getDate() + days);
   return d;
+}
+
+function dayKey(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function fromDayKey(key) {
+  return new Date(`${key}T00:00:00`);
 }
 
 function sameDay(a, b) {

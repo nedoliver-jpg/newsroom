@@ -3,25 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ned Oliver Newsroom Planner</title>
+  <title>Whiteboard</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="topbar">
-    <h1>Ned Oliver Newsroom Planner</h1>
+    <h1>Whiteboard</h1>
     <div class="topbar-actions">
       <button id="newStoryBtn">+ New Story</button>
-      <label class="toggle">
-        <input type="checkbox" id="remindersToggle" />
-        <span>In-app reminders</span>
-      </label>
     </div>
   </header>
 
   <main class="layout">
     <aside class="sidebar">
       <section class="card">
-        <h2>Due Next 48 Hours</h2>
+        <h2>Due Next 48 Hours (Expected File Time)</h2>
         <ul id="dueSoonList" class="compact-list"></ul>
       </section>
 
@@ -60,14 +56,11 @@
     </aside>
 
     <section class="content card">
-      <div class="agenda-header">
-        <button id="prevWeekBtn" class="secondary">← Previous Week</button>
-        <h2 id="agendaRangeLabel"></h2>
-        <button id="thisWeekBtn" class="secondary">This Week</button>
-        <button id="nextWeekBtn" class="secondary">Next Week →</button>
+      <h2 class="agenda-title">Rolling Agenda (scroll for more weeks)</h2>
+      <p class="help">Stories are placed by <strong>Expected Publish Date/Time</strong>. Drag cards to reschedule by day and adjust publish time inline.</p>
+      <div id="agendaScroller" class="agenda-scroller">
+        <div id="agendaWeeks" class="agenda-weeks"></div>
       </div>
-      <p class="help">Drag a story card to another day column to reschedule by day. Use each card's time input for time-of-day updates.</p>
-      <div id="agendaBoard" class="agenda-board"></div>
     </section>
   </main>
 
@@ -80,6 +73,7 @@
       <label>Budget Line <input id="budgetInput" required /></label>
       <label>Art Notes <textarea id="artNotesInput" rows="2"></textarea></label>
       <label>Expected File Date & Time <input type="datetime-local" id="fileTimeInput" required /></label>
+      <label>Expected Publish Date & Time <input type="datetime-local" id="publishTimeInput" required /></label>
       <label>Status
         <select id="statusInput" required>
           <option>In reporting</option>
@@ -105,6 +99,7 @@
       <p><strong>Budget Line:</strong> <span id="detailBudget"></span></p>
       <p><strong>Status:</strong> <span id="detailStatus"></span></p>
       <p><strong>Expected File Time:</strong> <span id="detailFileTime"></span></p>
+      <p><strong>Expected Publish Time:</strong> <span id="detailPublishTime"></span></p>
       <p><strong>Art Notes:</strong> <span id="detailArtNotes"></span></p>
 
       <section>
