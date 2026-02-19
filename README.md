@@ -3,17 +3,15 @@
 Simple browser-based newsroom budget + editorial planning app for `nedoliver.com/newsroom`.
 
 ## Features
-- Shared story board with equal edit permissions (no role gating).
-- Story fields: title, reporter, budget line, art notes, expected file date/time, expected publish date/time, priority (1-3), length (short/medium/long), workflow status.
-- Workflow statuses: In reporting -> Editing -> Ready -> Published.
-- Rolling, scrollable week agenda: Monday-Friday columns and a weekend column with separate Saturday and Sunday boxes stacked vertically.
-- Stories are placed on the agenda by expected publish date/time.
-- Drag/drop day rescheduling and inline publish-time edits on cards.
-- Configurable story card fields so each user can choose which details are shown.
-- Add day-level notes/reminders from the left sidebar (holidays, schedule changes, coverage notes) that appear on matching days.
-- Filters by reporter, status, and budget line.
-- Story detail modal with comments and activity log.
-- Dashboard widget for in-progress stories filing today, ordered by planned file time (excludes Ready/Published).
+- Shared story board with equal edit permissions.
+- Story fields: slug (auto-uppercase), reporter, budget line, art notes, optional expected file date/time, optional expected publish date, priority (1-3), length (short/medium/long), status.
+- Statuses: Reporting -> Writing -> Editing -> Ready -> Published.
+- Top action bar with New Story, New Reminder, and expanding search.
+- Filters and agenda-card-field controls are toggled from dropdown buttons above the board.
+- In-progress Today panel shows stories filing today, excludes Ready/Published, ordered by planned file time.
+- Rolling weekly board for up to 3 active weeks (Mon-Fri + stacked Sat/Sun weekend box), day reminders, and click-to-open story details.
+- No empty "No stories scheduled" placeholders in day boxes.
+- Extended agenda list after 3 weeks, grouped by date, then Unscheduled buckets (Ready, Editing, Writing), then Investigating (Reporting with no filing date/time).
 
 ## Run locally
 Open `index.html` directly, or run:
