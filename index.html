@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ned Oliver Newsroom Planner</title>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -51,13 +49,25 @@
       </section>
 
       <section class="card">
+        <h2>Agenda Card Fields</h2>
+        <div class="field-grid" id="fieldToggles"></div>
+      </section>
+
+      <section class="card">
         <h2>Stories</h2>
         <ul id="storyList" class="story-list"></ul>
       </section>
     </aside>
 
     <section class="content card">
-      <div id="calendar"></div>
+      <div class="agenda-header">
+        <button id="prevWeekBtn" class="secondary">← Previous Week</button>
+        <h2 id="agendaRangeLabel"></h2>
+        <button id="thisWeekBtn" class="secondary">This Week</button>
+        <button id="nextWeekBtn" class="secondary">Next Week →</button>
+      </div>
+      <p class="help">Drag a story card to another day column to reschedule by day. Use each card's time input for time-of-day updates.</p>
+      <div id="agendaBoard" class="agenda-board"></div>
     </section>
   </main>
 
@@ -119,7 +129,6 @@
     </article>
   </dialog>
 
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

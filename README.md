@@ -1,14 +1,16 @@
 # Ned Oliver Newsroom Planner
 
-Simple browser-based newsroom budget + editorial calendar for `nedoliver.com/newsroom`.
+Simple browser-based newsroom budget + editorial planning app for `nedoliver.com/newsroom`.
 
 ## Features
 - Shared story board with equal edit permissions (no role gating).
 - Story fields: title, reporter, budget line, art notes, expected file date/time, workflow status.
-- Workflow statuses: In reporting → Editing → Ready → Published.
-- FullCalendar daily, week, and list views.
+- Workflow statuses: In reporting -> Editing -> Ready -> Published.
+- Detailed, scrollable agenda board by week with separate columns for Monday-Friday plus one shared Saturday/Sunday block.
+- Week navigation (previous, this week, next).
+- Drag/drop day rescheduling from agenda cards.
+- Configurable story card fields so each user can choose which story details appear in daily agenda cards.
 - Filters by reporter, status, and budget line.
-- Drag/drop rescheduling in calendar.
 - Story detail modal with comments and activity log.
 - Dashboard widget for items due in the next 48 hours.
 - Optional in-app reminder alerts for upcoming file times (next 1 hour).
