@@ -10,7 +10,7 @@ Simple browser-based newsroom budget + editorial planning app for `nedoliver.com
 - Stories are placed on the agenda by expected publish date/time.
 - Drag/drop day rescheduling and inline publish-time edits on cards.
 - Configurable story card fields so each user can choose which details are shown.
-- Add day-level notes/reminders (holidays, schedule changes, coverage notes) that appear on each day.
+- Add day-level notes/reminders from the left sidebar (holidays, schedule changes, coverage notes) that appear on matching days.
 - Filters by reporter, status, and budget line.
 - Story detail modal with comments and activity log.
 - Dashboard widget for items due in the next 48 hours based on expected file times.

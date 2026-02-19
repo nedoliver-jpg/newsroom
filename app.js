@@ -20,6 +20,9 @@ const els = {
   clearFiltersBtn: document.getElementById("clearFiltersBtn"),
   newStoryBtn: document.getElementById("newStoryBtn"),
   fieldToggles: document.getElementById("fieldToggles"),
+  dayNoteForm: document.getElementById("dayNoteForm"),
+  dayNoteDateInput: document.getElementById("dayNoteDateInput"),
+  dayNoteTextInput: document.getElementById("dayNoteTextInput"),
   agendaScroller: document.getElementById("agendaScroller"),
   agendaWeeks: document.getElementById("agendaWeeks"),
   storyModal: document.getElementById("storyModal"),
@@ -61,6 +64,7 @@ init();
 
 function init() {
   renderFieldControls();
+  els.dayNoteDateInput.value = dayKey(new Date());
   bindEvents();
   bootstrapWeeks();
   renderAll();
@@ -81,6 +85,7 @@ function bindEvents() {
     if (story) openStoryModal(story);
   });
   els.deleteStoryBtn.addEventListener("click", deleteActiveStory);
+  els.dayNoteForm.addEventListener("submit", addSidebarDayNote);
 
   els.agendaScroller.addEventListener("scroll", () => {
     const nearBottom = els.agendaScroller.scrollTop + els.agendaScroller.clientHeight >= els.agendaScroller.scrollHeight - 240;
@@ -291,13 +296,11 @@ function renderWeekBlockHtml(monday) {
 function renderDayColumnHtml(dateKey, label, dateObj) {
   const cards = renderStoriesForDay(dateObj);
   const notes = renderNotesForDay(dateKey);
+  const noteMarkup = notes ? `<div class="day-notes">${notes}</div>` : "";
   return `<section class="day-column" data-drop-day="${dateKey}">
     <h4 class="day-title">${label}</h4>
     ${cards}
-    <div class="day-notes">
-      ${notes}
-      ${noteFormHtml(dateKey)}
-    </div>
+    ${noteMarkup}
   </section>`;
 }
 
@@ -305,13 +308,11 @@ function renderWeekendDayHtml(dateObj, label) {
   const key = dayKey(dateObj);
   const cards = renderStoriesForDay(dateObj);
   const notes = renderNotesForDay(key);
+  const noteMarkup = notes ? `<div class="day-notes">${notes}</div>` : "";
   return `<section class="weekend-day" data-drop-day="${key}">
     <h5 class="day-title">${label} (${formatShortDate(dateObj)})</h5>
     ${cards}
-    <div class="day-notes">
-      ${notes}
-      ${noteFormHtml(key)}
-    </div>
+    ${noteMarkup}
   </section>`;
 }
 
@@ -325,15 +326,20 @@ function renderStoriesForDay(dateObj) {
 
 function renderNotesForDay(dateKey) {
   const notes = dayNotes[dateKey] || [];
-  if (!notes.length) return '<div class="note-item">No day notes.</div>';
+  if (!notes.length) return "";
   return notes.map((n) => `<div class="note-item">${escapeHtml(n)}</div>`).join("");
 }
 
-function noteFormHtml(dateKey) {
-  return `<form class="note-form" data-note-form="${dateKey}">
-    <input type="text" data-note-input="${dateKey}" placeholder="Add day note (holiday, schedule change...)" />
-    <button type="submit" class="secondary">Add Note</button>
-  </form>`;
+function addSidebarDayNote(e) {
+  e.preventDefault();
+  const dateKey = (els.dayNoteDateInput.value || "").trim();
+  const text = els.dayNoteTextInput.value.trim();
+  if (!dateKey || !text) return;
+  if (!dayNotes[dateKey]) dayNotes[dateKey] = [];
+  dayNotes[dateKey].push(text);
+  persistDayNotes();
+  els.dayNoteTextInput.value = "";
+  renderAgenda();
 }
 
 function buildStoryCardHtml(story) {
@@ -368,20 +374,6 @@ function wireAgendaInteractions() {
     btn.addEventListener("click", () => {
       const story = stories.find((s) => s.id === btn.dataset.edit);
       if (story) openStoryModal(story);
-    });
-  });
-
-  els.agendaWeeks.querySelectorAll("form[data-note-form]").forEach((form) => {
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const dateKey = form.dataset.noteForm;
-      const input = form.querySelector("input[data-note-input]");
-      const text = input.value.trim();
-      if (!text) return;
-      if (!dayNotes[dateKey]) dayNotes[dateKey] = [];
-      dayNotes[dateKey].push(text);
-      persistDayNotes();
-      renderAgenda();
     });
   });
 

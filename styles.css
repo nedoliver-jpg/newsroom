@@ -97,9 +97,6 @@ menu { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0; margin
 .day-column.drag-over, .weekend-day.drag-over { outline: 2px dashed #315efb; outline-offset: -2px; }
 .day-notes { border-top: 1px dashed var(--line); padding-top: 0.35rem; margin-top: 0.1rem; }
 .note-item { font-size: 0.75rem; border: 1px solid var(--line); border-radius: 6px; padding: 0.25rem 0.35rem; background: #fff; }
-.note-form { display: grid; gap: 0.25rem; }
-.note-form input { font-size: 0.76rem; padding: 0.3rem; }
-.note-form button { font-size: 0.75rem; padding: 0.28rem; }
 .story-card {
   background: white;
   border: 1px solid var(--line);
@@ -115,6 +112,8 @@ menu { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0; margin
 .time-editor input { padding: 0.28rem; font-size: 0.76rem; }
 .card-actions { display: flex; gap: 0.35rem; }
 .card-actions button { flex: 1; font-size: 0.77rem; padding: 0.32rem 0.4rem; }
+.day-note-form { display: grid; gap: 0.35rem; }
+.day-note-form label { margin-bottom: 0; }
 .field-grid { display: grid; grid-template-columns: 1fr; gap: 0.3rem; }
 .field-grid label { margin-bottom: 0; display: flex; align-items: center; gap: 0.45rem; }
 .empty-day { font-size: 0.75rem; color: #64738f; border: 1px dashed var(--line); border-radius: 8px; padding: 0.45rem; }
