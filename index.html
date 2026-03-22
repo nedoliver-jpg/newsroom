@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Whiteboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>Whiteboard</h1>
+    <div class="topbar-actions">
+      <button id="newStoryBtn">+ New Story</button>
+      <button id="newReminderBtn" class="secondary">+ New Reminder</button>
+      <button id="searchToggleBtn" class="icon-btn" aria-label="Search">🔍</button>
+      <input id="searchInput" class="collapsed-search" placeholder="Search stories..." />
+    </div>
+  </header>
+
+  <main class="layout single-column">
+    <section class="content card">
+      <div class="toolbar-row">
+        <h2 class="agenda-title">Whiteboard</h2>
+        <div class="toolbar-actions">
+          <button id="filtersToggleBtn" class="secondary">Filters ▾</button>
+          <button id="fieldsToggleBtn" class="secondary">Card Fields ▾</button>
+        </div>
+      </div>
+
+      <section id="filtersPanel" class="inline-panel hidden-panel">
+        <label>Reporter <input type="text" id="reporterFilter" placeholder="Filter by reporter" /></label>
+        <label>Status
+          <select id="statusFilter">
+            <option value="">All statuses</option>
+            <option>Reporting</option>
+            <option>Writing</option>
+            <option>Editing</option>
+            <option>Ready</option>
+            <option>Published</option>
+          </select>
+        </label>
+        <label>Budget Line <input type="text" id="budgetFilter" placeholder="Filter by budget line" /></label>
+        <button id="clearFiltersBtn" class="secondary">Clear Filters</button>
+      </section>
+
+      <section id="fieldsPanel" class="inline-panel hidden-panel">
+        <div class="field-grid" id="fieldToggles"></div>
+      </section>
+
+      <div id="agendaScroller" class="agenda-scroller">
+        <div id="agendaWeeks" class="agenda-weeks"></div>
+      </div>
+
+      <section id="futureAgenda" class="card future-agenda"></section>
+    </section>
+  </main>
+
+  <dialog id="storyModal">
+    <form id="storyForm" method="dialog">
+      <h2 id="storyModalTitle">New Story</h2>
+      <input type="hidden" id="storyId" />
+      <label>Slug <input id="titleInput" required /></label>
+      <label>Reporter <input id="reporterInput" required /></label>
+      <label>Budget Line <textarea id="budgetInput" rows="2" required></textarea></label>
+      <label>Art Notes <input id="artNotesInput" /></label>
+      <label>Expected File Date <input type="date" id="fileDateInput" /></label>
+      <label>Expected File Time
+        <select id="fileTimeInput"></select>
+      </label>
+      <label>Expected Publish Date <input type="date" id="publishDateInput" /></label>
+      <label>Priority
+        <select id="priorityInput" required>
+          <option value="1">1 (Highest)</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+        </select>
+      </label>
+      <label>Length
+        <select id="lengthInput" required>
+          <option>Short</option>
+          <option>Medium</option>
+          <option>Long</option>
+        </select>
+      </label>
+      <label>Status
+        <select id="statusInput" required>
+          <option>Reporting</option>
+          <option>Writing</option>
+          <option>Editing</option>
+          <option>Ready</option>
+          <option>Published</option>
+        </select>
+      </label>
+      <menu>
+        <button type="button" id="cancelModalBtn" class="secondary">Cancel</button>
+        <button type="submit">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <dialog id="reminderModal">
+    <form id="dayNoteForm" method="dialog">
+      <h2>New Reminder</h2>
+      <label>Date <input type="date" id="dayNoteDateInput" required /></label>
+      <label>Reminder <input type="text" id="dayNoteTextInput" required /></label>
+      <menu>
+        <button type="button" id="cancelReminderBtn" class="secondary">Cancel</button>
+        <button type="submit">Save Reminder</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <dialog id="detailModal">
+    <article>
+      <header class="detail-header">
+        <h2 id="detailTitle"></h2>
+        <button id="editFromDetailBtn">Edit</button>
+      </header>
+      <p><strong>Reporter:</strong> <span id="detailReporter"></span></p>
+      <p><strong>Budget Line:</strong> <span id="detailBudget"></span></p>
+      <p><strong>Status:</strong> <span id="detailStatus"></span></p>
+      <p><strong>Priority:</strong> <span id="detailPriority"></span></p>
+      <p><strong>Length:</strong> <span id="detailLength"></span></p>
+      <p><strong>Expected File:</strong> <span id="detailFileTime"></span></p>
+      <p><strong>Expected Publish Date:</strong> <span id="detailPublishTime"></span></p>
+      <p><strong>Art Notes:</strong> <span id="detailArtNotes"></span></p>
+
+      <section>
+        <h3>Comments</h3>
+        <ul id="commentsList" class="compact-list"></ul>
+        <form id="commentForm">
+          <input id="commentAuthorInput" placeholder="Your name" required />
+          <input id="commentBodyInput" placeholder="Comment" required />
+          <button type="submit">Add Comment</button>
+        </form>
+      </section>
+
+      <section>
+        <h3>Activity Log</h3>
+        <ul id="activityList" class="compact-list"></ul>
+      </section>
+
+      <menu>
+        <button id="closeDetailBtn" class="secondary">Close</button>
+        <button id="deleteStoryBtn" class="danger">Delete Story</button>
+      </menu>
+    </article>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
